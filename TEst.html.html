@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wise Debit Card </title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5fff3;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #c5f1a5, #a6e55c);
+      color: #1a1a1a;
+      padding: 2rem;
+      border-radius: 1.5rem;
+      width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .card h2 {
+      margin: 0 0 1rem;
+      font-size: 1.2rem;
+      font-weight: 400;
+    }
+
+    .balance {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .controls {
+      margin-top: 2rem;
+      width: 320px;
+      background: white;
+      padding: 1rem;
+      border-radius: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .controls h3 {
+      margin-top: 0;
+    }
+
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #a6e55c;
+      color: #1a1a1a;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    button:hover {
+      background: #91d94a;
+    }
+
+    .purchase-list {
+      margin-top: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .purchase-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+    }
+
+    .timestamp {
+      font-size: 0.75rem;
+      color: #666;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .clear-btn {
+      background: #f47171;
+      color: white;
+    }
+
+    .clear-btn:hover {
+      background: #e05252;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Available Balance</h2>
+    <div class="balance" id="balance">£0.00</div>
+  </div>
+
+  <div class="controls">
+    <h3>Update Balance</h3>
+    <input type="number" id="newBalance" placeholder="Enter new balance" />
+    <button onclick="updateBalance()">Set Balance</button>
+
+    <h3 style="margin-top: 1.5rem;">Add Purchase</h3>
+    <input type="text" id="purchaseDesc" placeholder="Purchase description" />
+    <input type="number" id="purchaseAmount" placeholder="Amount" />
+    <button onclick="addPurchase()">Add Purchase</button>
+
+    <div class="purchase-list" id="purchaseList"></div>
+
+    <button class="clear-btn" onclick="clearAll()">Clear All</button>
+  </div>
+
+  <script>
+    let balance = 0;
+    let purchases = [];
+
+    function formatCurrency(amount) {
+      return `£${amount.toFixed(2)}`;
+    }
+
+    function getTimestamp() {
+      const now = new Date();
+      return now.toLocaleString('en-GB', { hour12: false });
+    }
+
+    function loadData() {
+      const savedBalance = localStorage.getItem("balance");
+      const savedPurchases = localStorage.getItem("purchases");
+
+      if (savedBalance !== null) balance = parseFloat(savedBalance);
+      if (savedPurchases) purchases = JSON.parse(savedPurchases);
+
+      updateDisplay();
+    }
+
+    function saveData() {
+      localStorage.setItem("balance", balance.toString());
+      localStorage.setItem("purchases", JSON.stringify(purchases));
+    }
+
+    function updateDisplay() {
+      document.getElementById("balance").innerText = formatCurrency(balance);
+      const list = document.getElementById("purchaseList");
+      list.innerHTML = "";
+
+      purchases.forEach(purchase => {
+        const item = document.createElement("div");
+        item.className = "purchase-item";
+        item.innerHTML = `
+          <div>
+            <strong>${purchase.desc}</strong>
+            <div class="timestamp">${purchase.timestamp}</div>
+          </div>
+          <span>-£${purchase.amount.toFixed(2)}</span>`;
+        list.appendChild(item);
+      });
+    }
+
+    function updateBalance() {
+      const input = document.getElementById("newBalance");
+      const newBalance = parseFloat(input.value);
+      if (!isNaN(newBalance) && newBalance >= 0) {
+        balance = newBalance;
+        saveData();
+        updateDisplay();
+        input.value = "";
+      } else {
+        alert("Please enter a valid amount.");
+      }
+    }
+
+    function addPurchase() {
+      const descInput = document.getElementById("purchaseDesc");
+      const amountInput = document.getElementById("purchaseAmount");
+
+      const desc = descInput.value.trim();
+      const amount = parseFloat(amountInput.value);
+
+      if (!desc || isNaN(amount) || amount <= 0) {
+        alert("Please enter valid purchase details.");
+        return;
+      }
+
+      if (amount > balance) {
+        alert("Insufficient balance.");
+        return;
+      }
+
+      const timestamp = getTimestamp();
+      balance -= amount;
+      purchases.unshift({ desc, amount, timestamp });
+      saveData();
+      updateDisplay();
+
+      descInput.value = "";
+      amountInput.value = "";
+    }
+
+    function clearAll() {
+      if (confirm("Are you sure you want to reset all data?")) {
+        balance = 0;
+        purchases = [];
+        localStorage.clear();
+        updateDisplay();
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
+
+
