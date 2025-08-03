@@ -1,232 +1,613 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Wise Debit Card </title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f5fff3;
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .card {
-      background: linear-gradient(135deg, #c5f1a5, #a6e55c);
-      color: #1a1a1a;
-      padding: 2rem;
-      border-radius: 1.5rem;
-      width: 320px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      position: relative;
-    }
-
-    .card h2 {
-      margin: 0 0 1rem;
-      font-size: 1.2rem;
-      font-weight: 400;
-    }
-
-    .balance {
-      font-size: 2rem;
-      font-weight: bold;
-    }
-
-    .controls {
-      margin-top: 2rem;
-      width: 320px;
-      background: white;
-      padding: 1rem;
-      border-radius: 1rem;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    }
-
-    .controls h3 {
-      margin-top: 0;
-    }
-
-    input[type="number"], input[type="text"] {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-
-    button {
-      background: #a6e55c;
-      color: #1a1a1a;
-      padding: 0.6rem 1rem;
-      border: none;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-      font-weight: 600;
-      margin-right: 0.5rem;
-    }
-
-    button:hover {
-      background: #91d94a;
-    }
-
-    .purchase-list {
-      margin-top: 1rem;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .purchase-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.3rem 0;
-      border-bottom: 1px solid #eee;
-      font-size: 0.95rem;
-    }
-
-    .timestamp {
-      font-size: 0.75rem;
-      color: #666;
-      display: block;
-      margin-top: 2px;
-    }
-
-    .clear-btn {
-      background: #f47171;
-      color: white;
-    }
-
-    .clear-btn:hover {
-      background: #e05252;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prize Wheel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        #wheel-canvas {
+            display: block;
+            background-color: #fff;
+            border-radius: 9999px;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin: auto;
+            border: 8px solid #cbd5e1;
+            /* Ensure the canvas is responsive */
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+        .pointer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #f87171;
+            z-index: 10;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            z-index: 50;
+            display: none;
+            max-width: 90%;
+            width: 400px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            display: none;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 p-4">
 
-  <div class="card">
-    <h2>Available Balance</h2>
-    <div class="balance" id="balance">£0.00</div>
-  </div>
+    <!-- Main Content Container -->
+    <div class="container mx-auto p-4 md:p-8 bg-white rounded-xl shadow-lg">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Prize Wheel</h1>
 
-  <div class="controls">
-    <h3>Update Balance</h3>
-    <input type="number" id="newBalance" placeholder="Enter new balance" />
-    <button onclick="updateBalance()">Set Balance</button>
+        <!-- Wheel Section -->
+        <div id="wheel-section" class="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 mb-8">
+            <!-- Canvas Container (smaller and responsive) -->
+            <div class="relative w-full max-w-[400px] mx-auto">
+                <canvas id="wheel-canvas" width="400" height="400"></canvas>
+                <div class="pointer transform -translate-x-1/2 -translate-y-1/2" style="left: 50%;"></div>
+            </div>
+            
+            <div class="w-full md:w-1/3 flex flex-col items-center">
+                <button id="spin-button" class="w-full px-8 py-4 mb-4 text-white text-xl font-bold bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Spin!
+                </button>
+                <div id="result-message" class="text-xl font-semibold text-gray-700 text-center p-4 rounded-lg bg-gray-100 w-full min-h-[4rem] flex items-center justify-center border border-gray-200">
+                    Press "Spin!" to begin.
+                </div>
+            </div>
+        </div>
 
-    <h3 style="margin-top: 1.5rem;">Add Purchase</h3>
-    <input type="text" id="purchaseDesc" placeholder="Purchase description" />
-    <input type="number" id="purchaseAmount" placeholder="Amount" />
-    <button onclick="addPurchase()">Add Purchase</button>
+        <!-- Load Wheel Section (Always visible) -->
+        <div id="load-wheel-section" class="mt-8 p-6 md:p-8 bg-gray-50 rounded-xl shadow-inner">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Load Wheel from Code</h3>
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-grow">
+                    <label for="load-code-input" class="block text-sm font-medium text-gray-700 mb-1 sr-only">Paste a code here</label>
+                    <input type="text" id="load-code-input" placeholder="Paste a code here" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button id="load-code-button" class="w-full md:w-auto px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition duration-300 transform hover:scale-105 active:scale-95">
+                        Load Wheel
+                    </button>
+                </div>
+            </div>
+        </div>
 
-    <div class="purchase-list" id="purchaseList"></div>
+        <!-- Login Section -->
+        <div id="login-section" class="mt-12 p-6 md:p-8 bg-gray-50 rounded-xl shadow-inner">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Admin Login</h2>
+            <form id="login-form" class="max-w-md mx-auto">
+                <div class="mb-4">
+                    <label for="username-input" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="username-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="password-input" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <button type="submit" class="w-full px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 transform hover:scale-105 active:scale-95">Login</button>
+            </form>
+            <p id="login-error" class="text-center text-red-500 mt-4 hidden"></p>
+        </div>
 
-    <button class="clear-btn" onclick="clearAll()">Clear All</button>
-  </div>
+        <!-- Admin Dashboard Section (Hidden by default) -->
+        <div id="admin-dashboard" class="hidden mt-12 p-6 md:p-8 bg-gray-50 rounded-xl shadow-inner">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Admin Dashboard</h2>
+            <p class="text-center text-green-600 mb-4">Logged in as admin.</p>
 
-  <script>
-    let balance = 0;
-    let purchases = [];
+            <!-- Prize Management Form -->
+            <form id="prize-form" class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-grow">
+                    <label for="prize-name" class="block text-sm font-medium text-gray-700 mb-1">Prize Name</label>
+                    <input type="text" id="prize-name" placeholder="e.g., Free Coffee" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="prize-percentage" class="block text-sm font-medium text-gray-700 mb-1">Chance (%)</label>
+                    <input type="number" id="prize-percentage" placeholder="1-100" min="1" max="100" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-300 transform hover:scale-105 active:scale-95">Add Prize</button>
+                </div>
+            </form>
 
-    function formatCurrency(amount) {
-      return `£${amount.toFixed(2)}`;
-    }
+            <!-- Prize List -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Current Prizes (<span id="total-percentage">0</span>% total)</h3>
+                <div id="prize-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Prize items will be dynamically added here -->
+                </div>
+            </div>
 
-    function getTimestamp() {
-      const now = new Date();
-      return now.toLocaleString('en-GB', { hour12: false });
-    }
+            <!-- Share Wheel Section -->
+            <div class="border-t border-gray-200 pt-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Share Your Wheel</h3>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow">
+                        <label for="shareable-code" class="block text-sm font-medium text-gray-700 mb-1">Shareable Code</label>
+                        <input type="text" id="shareable-code" readonly class="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-200">
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button id="regenerate-code-button" class="w-full md:w-auto px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition duration-300 transform hover:scale-105 active:scale-95">
+                            Regenerate Code
+                        </button>
+                        <button id="copy-code-button" class="w-full md:w-auto px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-300 transform hover:scale-105 active:scale-95">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-    function loadData() {
-      const savedBalance = localStorage.getItem("balance");
-      const savedPurchases = localStorage.getItem("purchases");
+            <!-- Spin Results Section -->
+            <div class="border-t border-gray-200 pt-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Recent Spin Results</h3>
+                <div id="spin-results-list" class="flex flex-col gap-2">
+                    <!-- Spin results will be dynamically added here -->
+                    <p class="text-sm text-gray-500">No recent results.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      if (savedBalance !== null) balance = parseFloat(savedBalance);
-      if (savedPurchases) purchases = JSON.parse(savedPurchases);
+    <!-- Message Box for Winner -->
+    <div id="winner-message-box" class="message-box">
+        <h3 id="winner-text" class="text-2xl font-bold text-gray-800 mb-2"></h3>
+        <p class="text-gray-600 mb-4">Congratulations! Press OK to continue.</p>
+        <button id="close-message-box" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">OK</button>
+    </div>
+    <div id="overlay" class="overlay"></div>
 
-      updateDisplay();
-    }
+    <script>
+        // Game state variables
+        let prizes = [];
+        let spinTimeout = null;
+        let isSpinning = false;
+        let isLoggedIn = false;
+        let spinResults = [];
 
-    function saveData() {
-      localStorage.setItem("balance", balance.toString());
-      localStorage.setItem("purchases", JSON.stringify(purchases));
-    }
+        // HTML elements
+        const canvas = document.getElementById('wheel-canvas');
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spin-button');
+        const resultMessageDiv = document.getElementById('result-message');
+        
+        const loadWheelSection = document.getElementById('load-wheel-section');
+        const loadCodeInput = document.getElementById('load-code-input');
+        const loadCodeButton = document.getElementById('load-code-button');
 
-    function updateDisplay() {
-      document.getElementById("balance").innerText = formatCurrency(balance);
-      const list = document.getElementById("purchaseList");
-      list.innerHTML = "";
+        const loginSection = document.getElementById('login-section');
+        const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginError = document.getElementById('login-error');
 
-      purchases.forEach(purchase => {
-        const item = document.createElement("div");
-        item.className = "purchase-item";
-        item.innerHTML = `
-          <div>
-            <strong>${purchase.desc}</strong>
-            <div class="timestamp">${purchase.timestamp}</div>
-          </div>
-          <span>-£${purchase.amount.toFixed(2)}</span>`;
-        list.appendChild(item);
-      });
-    }
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const prizeForm = document.getElementById('prize-form');
+        const prizeNameInput = document.getElementById('prize-name');
+        const prizePercentageInput = document.getElementById('prize-percentage');
+        const prizeListDiv = document.getElementById('prize-list');
+        const totalPercentageSpan = document.getElementById('total-percentage');
+        const regenerateCodeButton = document.getElementById('regenerate-code-button');
+        const copyCodeButton = document.getElementById('copy-code-button');
+        const shareableCodeInput = document.getElementById('shareable-code');
+        const winnerMessageBox = document.getElementById('winner-message-box');
+        const winnerText = document.getElementById('winner-text');
+        const closeMessageBoxButton = document.getElementById('close-message-box');
+        const overlay = document.getElementById('overlay');
+        const spinResultsList = document.getElementById('spin-results-list');
+        
+        // Hardcoded admin credentials
+        const ADMIN_USERNAME = 'legacyadmins';
+        const ADMIN_PASSWORD = 'gagop';
 
-    function updateBalance() {
-      const input = document.getElementById("newBalance");
-      const newBalance = parseFloat(input.value);
-      if (!isNaN(newBalance) && newBalance >= 0) {
-        balance = newBalance;
-        saveData();
-        updateDisplay();
-        input.value = "";
-      } else {
-        alert("Please enter a valid amount.");
-      }
-    }
+        // Initial prize data
+        prizes = [
+            { name: "Free Coffee", percentage: 40 },
+            { name: "20% Off", percentage: 30 },
+            { name: "Try Again", percentage: 20 },
+            { name: "Big Prize!", percentage: 10 }
+        ];
 
-    function addPurchase() {
-      const descInput = document.getElementById("purchaseDesc");
-      const amountInput = document.getElementById("purchaseAmount");
+        // Function to draw the wheel
+        function drawWheel() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
 
-      const desc = descInput.value.trim();
-      const amount = parseFloat(amountInput.value);
+            if (prizes.length === 0) {
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '24px Inter, sans-serif';
+                ctx.fillStyle = '#6b7280';
+                ctx.fillText('Add prizes to begin!', canvas.width / 2, canvas.height / 2);
+                return;
+            }
 
-      if (!desc || isNaN(amount) || amount <= 0) {
-        alert("Please enter valid purchase details.");
-        return;
-      }
+            const totalPercentage = prizes.reduce((sum, prize) => sum + prize.percentage, 0);
+            let currentAngle = 0;
+            const colors = [
+                '#a7f3d0', '#6ee7b7', '#34d399', '#10b981', '#059669',
+                '#fcd34d', '#fbbf24', '#f59e0b', '#d97706', '#b45309',
+                '#a5b4fc', '#818cf8', '#6366f1', '#4f46e5', '#4338ca',
+                '#d1d5db', '#9ca3af', '#6b7280', '#4b5563', '#374151'
+            ];
 
-      if (amount > balance) {
-        alert("Insufficient balance.");
-        return;
-      }
+            prizes.forEach((prize, index) => {
+                const sliceAngle = (prize.percentage / totalPercentage) * 2 * Math.PI;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + sliceAngle;
 
-      const timestamp = getTimestamp();
-      balance -= amount;
-      purchases.unshift({ desc, amount, timestamp });
-      saveData();
-      updateDisplay();
+                // Draw the segment
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, startAngle, endAngle);
+                ctx.lineTo(canvas.width / 2, canvas.height / 2);
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.fill();
 
-      descInput.value = "";
-      amountInput.value = "";
-    }
+                // Draw the text (prize name)
+                const textAngle = startAngle + sliceAngle / 2;
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(textAngle);
 
-    function clearAll() {
-      if (confirm("Are you sure you want to reset all data?")) {
-        balance = 0;
-        purchases = [];
-        localStorage.clear();
-        updateDisplay();
-      }
-    }
+                // Define a safe text radius and dynamically adjust font size
+                const radius = canvas.width / 2;
+                const textRadius = radius * 0.75;
+                let fontSize = 16;
+                let text = prize.name;
 
-    loadData();
-  </script>
+                // Measure text width to check if it fits in the slice
+                ctx.font = `${fontSize}px Inter, sans-serif`;
+                let textWidth = ctx.measureText(text).width;
+                const maxTextWidth = radius * sliceAngle * 0.8; // Use 80% of the slice width
+
+                // If text is too long, reduce font size or truncate
+                while (textWidth > maxTextWidth && fontSize > 8) {
+                    fontSize--;
+                    ctx.font = `${fontSize}px Inter, sans-serif`;
+                    textWidth = ctx.measureText(text).width;
+                }
+
+                if (textWidth > maxTextWidth) {
+                    while (ctx.measureText(text + '...').width > maxTextWidth) {
+                        text = text.substring(0, text.length - 1);
+                    }
+                    text += '...';
+                }
+                
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#1f2937';
+                ctx.fillText(text, textRadius, 0);
+
+                ctx.restore();
+
+                currentAngle = endAngle;
+            });
+        }
+
+        // Function to spin the wheel
+        function spinWheel() {
+            if (isSpinning || prizes.length === 0) return;
+
+            isSpinning = true;
+            spinButton.disabled = true;
+            resultMessageDiv.textContent = "Spinning...";
+
+            const totalPercentage = prizes.reduce((sum, prize) => sum + prize.percentage, 0);
+            if (totalPercentage !== 100) {
+                showMessageBox("Error", "The total percentage must be 100% to spin.");
+                isSpinning = false;
+                spinButton.disabled = false;
+                return;
+            }
+
+            // Determine the winning prize
+            const randomNumber = Math.random() * 100;
+            let cumulativePercentage = 0;
+            let winningIndex = -1;
+
+            for (let i = 0; i < prizes.length; i++) {
+                cumulativePercentage += prizes[i].percentage;
+                if (randomNumber <= cumulativePercentage) {
+                    winningIndex = i;
+                    break;
+                }
+            }
+
+            const winningPrize = prizes[winningIndex];
+
+            // Calculate rotation to land on the winning prize
+            const degreesPerPercentage = 3.6; // 360 degrees / 100%
+            const winningSliceStart = (prizes.slice(0, winningIndex).reduce((sum, prize) => sum + prize.percentage, 0)) * degreesPerPercentage;
+            const winningSliceEnd = winningSliceStart + (winningPrize.percentage * degreesPerPercentage);
+
+            const landingAngle = Math.random() * (winningSliceEnd - winningSliceStart) + winningSliceStart;
+            
+            // Add extra spins to make it a more exciting animation
+            const totalRotation = 360 * 5 + 360 - landingAngle;
+            
+            // Convert to radians for canvas rotation
+            const totalRotationRadians = (totalRotation * Math.PI) / 180;
+            
+            let currentRotation = 0;
+            const duration = 5000; // 5 seconds
+            const startTime = performance.now();
+
+            function animate(time) {
+                const elapsedTime = time - startTime;
+                const progress = Math.min(elapsedTime / duration, 1);
+                
+                // Use an easing function for a more realistic spin down
+                const easedProgress = 1 - Math.pow(1 - progress, 3);
+                currentRotation = totalRotationRadians * easedProgress;
+
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(currentRotation);
+                ctx.translate(-canvas.width / 2, -canvas.height / 2);
+                drawWheel();
+                ctx.restore();
+
+                if (progress < 1) {
+                    spinTimeout = requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    spinButton.disabled = false;
+                    resultMessageDiv.textContent = `Winner: ${winningPrize.name}`;
+                    showWinnerMessage(winningPrize.name);
+
+                    // Add the spin result to the list and set a timer for deletion
+                    if (isLoggedIn) {
+                        const result = {
+                            prize: winningPrize.name,
+                            timestamp: new Date()
+                        };
+                        spinResults.push(result);
+                        updateSpinResultsUI();
+                        // Delete the result after 10 minutes
+                        setTimeout(() => {
+                            const indexToRemove = spinResults.findIndex(r => r === result);
+                            if (indexToRemove !== -1) {
+                                spinResults.splice(indexToRemove, 1);
+                                updateSpinResultsUI();
+                            }
+                        }, 10 * 60 * 1000); // 10 minutes in milliseconds
+                    }
+
+                    // Automatically regenerate the code after the spin
+                    generateShareableCode();
+                }
+            }
+
+            spinTimeout = requestAnimationFrame(animate);
+        }
+
+        // Function to handle login
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                isLoggedIn = true;
+                loginSection.classList.add('hidden');
+                adminDashboard.classList.remove('hidden');
+                loginError.classList.add('hidden');
+                refreshApp();
+            } else {
+                loginError.textContent = "Invalid username or password.";
+                loginError.classList.remove('hidden');
+            }
+        }
+
+        // Function to update the prize list in the admin dashboard
+        function updatePrizeList() {
+            prizeListDiv.innerHTML = '';
+            let totalPercentage = 0;
+
+            prizes.forEach((prize, index) => {
+                totalPercentage += prize.percentage;
+
+                const prizeItem = document.createElement('div');
+                prizeItem.classList.add('flex', 'items-center', 'justify-between', 'p-3', 'bg-white', 'border', 'border-gray-200', 'rounded-md', 'shadow-sm', 'text-sm');
+
+                const prizeInfo = document.createElement('div');
+                prizeInfo.textContent = `${prize.name} (${prize.percentage}%)`;
+                prizeItem.appendChild(prizeInfo);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'transition', 'duration-300');
+                deleteButton.innerHTML = `<i class="fas fa-trash-alt"></i>`;
+                deleteButton.onclick = () => deletePrize(index);
+                prizeItem.appendChild(deleteButton);
+
+                prizeListDiv.appendChild(prizeItem);
+            });
+
+            totalPercentageSpan.textContent = totalPercentage;
+        }
+
+        // Function to handle adding a prize
+        function addPrize(event) {
+            event.preventDefault();
+            const name = prizeNameInput.value.trim();
+            const percentage = parseInt(prizePercentageInput.value, 10);
+
+            if (name && percentage && percentage > 0) {
+                prizes.push({ name, percentage });
+                prizeNameInput.value = '';
+                prizePercentageInput.value = '';
+                refreshApp();
+            }
+        }
+
+        // Function to delete a prize
+        function deletePrize(index) {
+            prizes.splice(index, 1);
+            refreshApp();
+        }
+
+        // A simple hash function to add to the code for uniqueness
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash.toString(16);
+        }
+
+        // Function to generate the shareable code
+        function generateShareableCode() {
+            try {
+                // Create an object with prize data and a timestamp
+                const dataToEncode = {
+                    prizes: prizes,
+                    timestamp: new Date().toISOString()
+                };
+                const jsonString = JSON.stringify(dataToEncode);
+                const encodedString = btoa(jsonString); // Base64 encode
+                shareableCodeInput.value = encodedString;
+            } catch (e) {
+                console.error("Error generating shareable code:", e);
+                showMessageBox("Error", "Could not generate shareable code.");
+            }
+        }
+
+        // Function to copy the shareable code to the clipboard
+        function copyShareableCode() {
+            shareableCodeInput.select();
+            shareableCodeInput.setSelectionRange(0, 99999); // For mobile devices
+            try {
+                document.execCommand('copy');
+                showMessageBox("Copied!", "The shareable code has been copied to your clipboard.");
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showMessageBox("Error", "Could not copy code. Please copy it manually.");
+            }
+        }
+
+        // Function to load a wheel from a shared code
+        function loadWheelFromCode() {
+            const code = loadCodeInput.value.trim();
+            if (!code) {
+                showMessageBox("Error", "Please enter a code to load.");
+                return;
+            }
+            try {
+                const decodedString = atob(code); // Base64 decode
+                const loadedData = JSON.parse(decodedString);
+                
+                // Check if the loaded data has the expected structure
+                if (loadedData.prizes && Array.isArray(loadedData.prizes) && loadedData.prizes.every(p => p.name && typeof p.percentage === 'number')) {
+                    prizes = loadedData.prizes;
+                    loadCodeInput.value = '';
+                    refreshApp();
+                    showMessageBox("Success", "Wheel loaded successfully!");
+                } else {
+                    throw new Error('Invalid data format');
+                }
+            } catch (e) {
+                console.error("Error loading wheel:", e);
+                showMessageBox("Error", "Invalid or corrupt code. Please check the code and try again.");
+            }
+        }
+        
+        // Function to update the UI with recent spin results
+        function updateSpinResultsUI() {
+            spinResultsList.innerHTML = '';
+            if (spinResults.length === 0) {
+                spinResultsList.innerHTML = '<p class="text-sm text-gray-500">No recent results.</p>';
+            } else {
+                spinResults.forEach(result => {
+                    const resultItem = document.createElement('div');
+                    resultItem.classList.add('flex', 'justify-between', 'items-center', 'p-3', 'bg-white', 'rounded-md', 'shadow-sm', 'text-sm', 'border', 'border-gray-200');
+                    const timeString = result.timestamp.toLocaleTimeString();
+                    resultItem.innerHTML = `
+                        <p class="font-medium">${result.prize}</p>
+                        <p class="text-gray-500 text-xs">${timeString}</p>
+                    `;
+                    spinResultsList.appendChild(resultItem);
+                });
+            }
+        }
+
+        // Function to show a custom message box
+        function showMessageBox(title, message) {
+            winnerText.textContent = title;
+            document.getElementById('winner-message-box').querySelector('p').textContent = message;
+            winnerMessageBox.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        // Function to show the winner message box
+        function showWinnerMessage(prizeName) {
+            winnerText.textContent = `You won: ${prizeName}!`;
+            document.getElementById('winner-message-box').querySelector('p').textContent = "Congratulations!";
+            winnerMessageBox.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        // Function to close the message box
+        function closeMessageBox() {
+            winnerMessageBox.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        // Main refresh function to update all components
+        function refreshApp() {
+            drawWheel();
+            if (isLoggedIn) {
+                updatePrizeList();
+                updateSpinResultsUI();
+            }
+        }
+
+        // Event listeners
+        spinButton.addEventListener('click', spinWheel);
+        prizeForm.addEventListener('submit', addPrize);
+        regenerateCodeButton.addEventListener('click', generateShareableCode);
+        copyCodeButton.addEventListener('click', copyShareableCode);
+        loadCodeButton.addEventListener('click', loadWheelFromCode);
+        closeMessageBoxButton.addEventListener('click', closeMessageBox);
+        loginForm.addEventListener('submit', handleLogin);
+
+        // Initial setup
+        window.onload = function() {
+            refreshApp();
+            // This is a placeholder for a random user ID for Firestore. It is not used in this app.
+            const userId = "random_user_id";
+        };
+    </script>
 </body>
 </html>
-
-
